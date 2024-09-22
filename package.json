@@ -1,0 +1,16 @@
+{
+  "name": "api-node-webrtc",
+  "version": "1.0.0",
+  "description": "Este repositório é utilizado para testes de deploy na plataforma de hospedagem [Render](https://render.com/). Ele contém um projeto simples que serve como exemplo para entender e testar o processo de deploy contínuo na Render.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "socket.io": "^4.8.0"
+  }
+}
