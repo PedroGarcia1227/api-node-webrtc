@@ -8,14 +8,15 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 const io = socketIo(server);
 
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.get('/stream', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/stream.html'));
+    res.sendFile(path.join(__dirname, 'public', 'stream.html'));
 });
 
 app.get('/view', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/view.html'));
+    res.sendFile(path.join(__dirname, 'public', 'view.html'));
 });
 
 // WebSocket para sinalização WebRTC
