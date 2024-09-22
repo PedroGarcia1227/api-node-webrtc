@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar Transmissão</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        video {
+            width: 80%;
+            max-width: 720px;
+            height: auto;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visualizar Transmissão</h1>
+    <video id="remoteVideo" autoplay playsinline controls></video>
+    <p id="status">Aguardando stream...</p>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script>
+        const socket = io();
+        const remoteVideo = document.getElementById('remoteVideo');
+        const statusText = document.getElementById('status');
+
+        const peerConnection = new RTCPeerConnection();
+
+        // Adiciona a stream remota ao vídeo
+        peerConnection.ontrack = event => {
+            if (remoteVideo.srcObject !== event.streams[0]) {
+                remoteVideo.srcObject = event.streams[0];
+                remoteVideo.play();  // Garante que o vídeo seja reproduzido
+                statusText.innerText = "Stream de vídeo remoto adicionado.";
+                console.log('Stream de vídeo remoto adicionado.');
+            }
+        };
+
+        // Recebe a oferta de conexão (offer) do transmissor
+        socket.on('offer', offer => {
+            peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+                .then(() => {
+                    console.log("Oferta recebida e aplicada:", offer);
+                    return peerConnection.createAnswer();
+                })
+                .then(answer => {
+                    return peerConnection.setLocalDescription(answer);
+                })
+                .then(() => {
+                    console.log("Resposta enviada:", peerConnection.localDescription);
+                    socket.emit('answer', peerConnection.localDescription);
+                    statusText.innerText = "Enviando resposta...";
+                })
+                .catch(err => {
+                    console.error('Erro ao processar a oferta:', err);
+                });
+        });
+
+        // Troca de candidatos ICE
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                console.log("Enviando candidato ICE:", event.candidate);
+                socket.emit('candidate', event.candidate);
+            }
+        };
+
+        // Recebe candidatos ICE do transmissor
+        socket.on('candidate', candidate => {
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+                .then(() => console.log('Candidato ICE adicionado com sucesso:', candidate))
+                .catch(err => console.error('Erro ao adicionar ICE Candidate:', err));
+        });
+
+        // Verificação se o vídeo está funcionando corretamente
+        remoteVideo.onloadedmetadata = () => {
+            console.log("Metadata do vídeo carregada.");
+            statusText.innerText = "Transmissão ao vivo recebida!";
+        };
+
+        remoteVideo.onplay = () => {
+            console.log("Vídeo está sendo reproduzido.");
+        };
+
+        remoteVideo.onerror = (err) => {
+            console.error("Erro ao tentar reproduzir o vídeo:", err);
+            statusText.innerText = "Erro ao tentar carregar a transmissão.";
+        };
+    </script>
+</body>
+</html>
