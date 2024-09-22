@@ -14,51 +14,57 @@
         const socket = io();
         const localVideo = document.getElementById('localVideo');
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-            .then(stream => {
-                localVideo.srcObject = stream;
+        let peerConnection;
 
-                const peerConnection = new RTCPeerConnection();
+        function startStream() {
+            peerConnection = new RTCPeerConnection();
 
-                // Adiciona as tracks da câmera ao PeerConnection
-                stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(stream => {
+                    localVideo.srcObject = stream;
 
-                // Envia a oferta de conexão (offer) para o servidor
-                peerConnection.createOffer()
-                    .then(offer => {
-                        return peerConnection.setLocalDescription(offer);
-                    })
-                    .then(() => {
-                        console.log("Oferta enviada:", peerConnection.localDescription);
-                        socket.emit('offer', peerConnection.localDescription);
-                    })
-                    .catch(err => console.error("Erro ao criar oferta:", err));
+                    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
-                // Recebe a resposta de conexão (answer) do visualizador
-                socket.on('answer', answer => {
-                    peerConnection.setRemoteDescription(answer)
-                        .then(() => console.log("Resposta recebida e aplicada:", answer))
-                        .catch(err => console.error('Erro ao definir RemoteDescription (answer):', err));
+                    peerConnection.createOffer()
+                        .then(offer => {
+                            return peerConnection.setLocalDescription(offer);
+                        })
+                        .then(() => {
+                            console.log("Oferta enviada:", peerConnection.localDescription);
+                            socket.emit('offer', peerConnection.localDescription);
+                        })
+                        .catch(err => console.error("Erro ao criar oferta:", err));
+
+                    socket.on('answer', answer => {
+                        peerConnection.setRemoteDescription(answer)
+                            .then(() => console.log("Resposta recebida e aplicada:", answer))
+                            .catch(err => console.error('Erro ao definir RemoteDescription (answer):', err));
+                    });
+
+                    peerConnection.onicecandidate = event => {
+                        if (event.candidate) {
+                            console.log("Enviando candidato ICE:", event.candidate);
+                            socket.emit('candidate', event.candidate);
+                        }
+                    };
+
+                    socket.on('candidate', candidate => {
+                        peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+                            .then(() => console.log('Candidato ICE adicionado com sucesso:', candidate))
+                            .catch(err => console.error('Erro ao adicionar ICE Candidate:', err));
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao acessar a câmera:', error);
                 });
+        }
 
-                // Troca de candidatos ICE (para firewall/travessia de NAT)
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        console.log("Enviando candidato ICE:", event.candidate);
-                        socket.emit('candidate', event.candidate);
-                    }
-                };
+        socket.on('request-offer', () => {
+            console.log('Solicitação de nova oferta recebida.');
+            startStream();
+        });
 
-                // Recebe os candidatos ICE
-                socket.on('candidate', candidate => {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
-                        .then(() => console.log('Candidato ICE adicionado com sucesso:', candidate))
-                        .catch(err => console.error('Erro ao adicionar ICE Candidate:', err));
-                });
-            })
-            .catch(error => {
-                console.error('Erro ao acessar a câmera:', error);
-            });
+        startStream();
     </script>
 </body>
 </html>

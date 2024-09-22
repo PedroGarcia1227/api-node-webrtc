@@ -10,6 +10,9 @@ const io = socketIo(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/', (req, res) => {
+    res.status(200).send('Tudo certo');
+  });
 
 app.get('/stream', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'stream.html'));
@@ -19,17 +22,24 @@ app.get('/view', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'view.html'));
 });
 
-// WebSocket para sinalização WebRTC
+let lastOffer = null;
+
 io.on('connection', (socket) => {
     console.log('Novo cliente conectado.');
 
     socket.on('offer', (offer) => {
-        console.log('Recebendo oferta...');
+        console.log('Recebendo oferta do transmissor...');
+        lastOffer = offer;
         socket.broadcast.emit('offer', offer);
     });
 
+    socket.on('request-offer', () => {
+        console.log('Visualizador solicitando nova oferta...');
+        socket.broadcast.emit('request-offer');
+    });
+
     socket.on('answer', (answer) => {
-        console.log('Recebendo resposta...');
+        console.log('Recebendo resposta do visualizador...');
         socket.broadcast.emit('answer', answer);
     });
 

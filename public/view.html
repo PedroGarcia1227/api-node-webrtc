@@ -35,17 +35,18 @@
 
         const peerConnection = new RTCPeerConnection();
 
-        // Adiciona a stream remota ao vídeo
         peerConnection.ontrack = event => {
             if (remoteVideo.srcObject !== event.streams[0]) {
                 remoteVideo.srcObject = event.streams[0];
-                remoteVideo.play();  // Garante que o vídeo seja reproduzido
+                remoteVideo.play();
                 statusText.innerText = "Stream de vídeo remoto adicionado.";
                 console.log('Stream de vídeo remoto adicionado.');
             }
         };
 
-        // Recebe a oferta de conexão (offer) do transmissor
+        socket.emit('viewer');
+        socket.emit('request-offer');
+
         socket.on('offer', offer => {
             peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
                 .then(() => {
@@ -65,7 +66,6 @@
                 });
         });
 
-        // Troca de candidatos ICE
         peerConnection.onicecandidate = event => {
             if (event.candidate) {
                 console.log("Enviando candidato ICE:", event.candidate);
@@ -73,14 +73,12 @@
             }
         };
 
-        // Recebe candidatos ICE do transmissor
         socket.on('candidate', candidate => {
             peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
                 .then(() => console.log('Candidato ICE adicionado com sucesso:', candidate))
                 .catch(err => console.error('Erro ao adicionar ICE Candidate:', err));
         });
 
-        // Verificação se o vídeo está funcionando corretamente
         remoteVideo.onloadedmetadata = () => {
             console.log("Metadata do vídeo carregada.");
             statusText.innerText = "Transmissão ao vivo recebida!";
