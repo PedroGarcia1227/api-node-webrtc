@@ -38,18 +38,15 @@
         const peerConnection = new RTCPeerConnection();
 
         peerConnection.ontrack = event => {
-            // Apenas defina srcObject uma vez
+            console.log("Track recebida:", event.streams[0]);
             if (!remoteVideo.srcObject) {
                 remoteVideo.srcObject = event.streams[0];
-                remoteVideo.play().catch(err => {
-                    console.error("Erro ao tentar reproduzir o vídeo:", err);
-                    statusText.innerText = "Erro ao tentar carregar a transmissão.";
-                });
-                statusText.innerText = "Stream de vídeo remoto adicionado.";
-                console.log('Stream de vídeo remoto adicionado.');
+                console.log('Stream de vídeo remoto adicionada ao srcObject.');
+            } else {
+                console.log('Stream já definida no srcObject, não faz nada.');
             }
         };
-
+        
 
         socket.emit('viewer');
         socket.emit('request-offer');
@@ -102,11 +99,18 @@
 
         // Função para iniciar a reprodução após interação do usuário
         startButton.onclick = () => {
-            remoteVideo.play().catch(err => {
-                console.error("Erro ao tentar reproduzir o vídeo:", err);
-                statusText.innerText = "Erro ao tentar carregar a transmissão.";
-            });
+            // Inicia a reprodução do vídeo apenas se a stream estiver configurada
+            if (remoteVideo.srcObject && !isPlaying) {
+                remoteVideo.play().then(() => {
+                    isPlaying = true; // Marca que o vídeo está sendo reproduzido
+                    console.log("Vídeo está sendo reproduzido.");
+                }).catch(err => {
+                    console.error("Erro ao tentar reproduzir o vídeo:", err);
+                    statusText.innerText = "Erro ao tentar carregar a transmissão.";
+                });
+            }
         };
+
     </script>
 </body>
 </html>
