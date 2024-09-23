@@ -49,6 +49,8 @@
         const statusText = document.getElementById('status');
         const playButton = document.getElementById('playButton');
 
+        let videoStreamAdded = false;  // Flag para evitar múltiplas tentativas de reprodução
+
         const peerConnection = new RTCPeerConnection();
 
         peerConnection.ontrack = event => {
@@ -56,20 +58,23 @@
                 remoteVideo.srcObject = event.streams[0];
                 statusText.innerText = "Stream de vídeo remoto adicionado.";
                 console.log('Stream de vídeo remoto adicionado.');
+                videoStreamAdded = true;
 
                 // Exibir o botão de play para o usuário
                 playButton.style.display = "block";
             }
         };
 
-        // Manter o autoplay desativado e esperar por interação do usuário
         playButton.addEventListener('click', () => {
-            remoteVideo.play().then(() => {
-                console.log("Vídeo está sendo reproduzido.");
-                playButton.style.display = "none";  // Esconder o botão após a reprodução iniciar
-            }).catch(err => {
-                console.error("Erro ao tentar reproduzir o vídeo:", err);
-            });
+            // Verificar se o stream foi adicionado e tentar reproduzir o vídeo
+            if (videoStreamAdded) {
+                remoteVideo.play().then(() => {
+                    console.log("Vídeo está sendo reproduzido.");
+                    playButton.style.display = "none";  // Esconder o botão após a reprodução iniciar
+                }).catch(err => {
+                    console.error("Erro ao tentar reproduzir o vídeo:", err);
+                });
+            }
         });
 
         socket.emit('viewer');
