@@ -25,6 +25,7 @@
 <body>
     <h1>Visualizar Transmissão</h1>
     <video id="remoteVideo" playsinline controls></video>
+    <button id="startButton">Iniciar Transmissão</button>
     <p id="status">Aguardando stream...</p>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
@@ -32,13 +33,13 @@
         const socket = io();
         const remoteVideo = document.getElementById('remoteVideo');
         const statusText = document.getElementById('status');
+        const startButton = document.getElementById('startButton');
 
         const peerConnection = new RTCPeerConnection();
 
         peerConnection.ontrack = event => {
             if (remoteVideo.srcObject !== event.streams[0]) {
                 remoteVideo.srcObject = event.streams[0];
-                remoteVideo.play();
                 statusText.innerText = "Stream de vídeo remoto adicionado.";
                 console.log('Stream de vídeo remoto adicionado.');
             }
@@ -91,6 +92,14 @@
         remoteVideo.onerror = (err) => {
             console.error("Erro ao tentar reproduzir o vídeo:", err);
             statusText.innerText = "Erro ao tentar carregar a transmissão.";
+        };
+
+        // Função para iniciar a reprodução após interação do usuário
+        startButton.onclick = () => {
+            remoteVideo.play().catch(err => {
+                console.error("Erro ao tentar reproduzir o vídeo:", err);
+                statusText.innerText = "Erro ao tentar carregar a transmissão.";
+            });
         };
     </script>
 </body>
