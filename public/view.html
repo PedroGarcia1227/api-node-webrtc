@@ -20,29 +20,57 @@
             height: auto;
             background-color: black;
         }
+        #playButton {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #playButton:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
     <h1>Visualizar Transmissão</h1>
-    <video id="remoteVideo" autoplay playsinline controls></video>
+    <video id="remoteVideo" playsinline controls></video>
     <p id="status">Aguardando stream...</p>
+    <button id="playButton">Clique para iniciar a reprodução</button>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script>
         const socket = io();
         const remoteVideo = document.getElementById('remoteVideo');
         const statusText = document.getElementById('status');
+        const playButton = document.getElementById('playButton');
 
         const peerConnection = new RTCPeerConnection();
 
         peerConnection.ontrack = event => {
             if (remoteVideo.srcObject !== event.streams[0]) {
                 remoteVideo.srcObject = event.streams[0];
-                remoteVideo.play();
                 statusText.innerText = "Stream de vídeo remoto adicionado.";
                 console.log('Stream de vídeo remoto adicionado.');
+
+                // Exibir o botão de play para o usuário
+                playButton.style.display = "block";
             }
         };
+
+        // Manter o autoplay desativado e esperar por interação do usuário
+        playButton.addEventListener('click', () => {
+            remoteVideo.play().then(() => {
+                console.log("Vídeo está sendo reproduzido.");
+                playButton.style.display = "none";  // Esconder o botão após a reprodução iniciar
+            }).catch(err => {
+                console.error("Erro ao tentar reproduzir o vídeo:", err);
+            });
+        });
 
         socket.emit('viewer');
         socket.emit('request-offer');
@@ -82,10 +110,6 @@
         remoteVideo.onloadedmetadata = () => {
             console.log("Metadata do vídeo carregada.");
             statusText.innerText = "Transmissão ao vivo recebida!";
-        };
-
-        remoteVideo.onplay = () => {
-            console.log("Vídeo está sendo reproduzido.");
         };
 
         remoteVideo.onerror = (err) => {
