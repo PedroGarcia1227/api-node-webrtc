@@ -54,9 +54,14 @@
         const peerConnection = new RTCPeerConnection({
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },  // Servidor STUN público
-                { urls: 'turn:your-turn-server.com' }     // Servidor TURN sem autenticação
+                {
+                    urls: 'turn:your-turn-server.com',  // Substitua pela URL do seu servidor
+                    username: 'seu-username',           // Coloque seu username aqui
+                    credential: 'sua-senha'             // Coloque sua senha aqui
+                }
             ]
         });
+
 
 
         peerConnection.ontrack = event => {
