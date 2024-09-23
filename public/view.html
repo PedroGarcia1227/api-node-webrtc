@@ -24,8 +24,7 @@
 </head>
 <body>
     <h1>Visualizar Transmissão</h1>
-    <video id="remoteVideo" playsinline controls></video>
-    <button id="startButton">Iniciar Transmissão</button>
+    <video id="remoteVideo" autoplay playsinline controls></video>
     <p id="status">Aguardando stream...</p>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
@@ -33,20 +32,17 @@
         const socket = io();
         const remoteVideo = document.getElementById('remoteVideo');
         const statusText = document.getElementById('status');
-        const startButton = document.getElementById('startButton');
 
         const peerConnection = new RTCPeerConnection();
 
         peerConnection.ontrack = event => {
-            console.log("Track recebida:", event.streams[0]);
-            if (!remoteVideo.srcObject) {
+            if (remoteVideo.srcObject !== event.streams[0]) {
                 remoteVideo.srcObject = event.streams[0];
-                console.log('Stream de vídeo remoto adicionada ao srcObject.');
-            } else {
-                console.log('Stream já definida no srcObject, não faz nada.');
+                remoteVideo.play();
+                statusText.innerText = "Stream de vídeo remoto adicionado.";
+                console.log('Stream de vídeo remoto adicionado.');
             }
         };
-        
 
         socket.emit('viewer');
         socket.emit('request-offer');
@@ -96,21 +92,6 @@
             console.error("Erro ao tentar reproduzir o vídeo:", err);
             statusText.innerText = "Erro ao tentar carregar a transmissão.";
         };
-
-        // Função para iniciar a reprodução após interação do usuário
-        startButton.onclick = () => {
-            // Inicia a reprodução do vídeo apenas se a stream estiver configurada
-            if (remoteVideo.srcObject && !isPlaying) {
-                remoteVideo.play().then(() => {
-                    isPlaying = true; // Marca que o vídeo está sendo reproduzido
-                    console.log("Vídeo está sendo reproduzido.");
-                }).catch(err => {
-                    console.error("Erro ao tentar reproduzir o vídeo:", err);
-                    statusText.innerText = "Erro ao tentar carregar a transmissão.";
-                });
-            }
-        };
-
     </script>
 </body>
 </html>
