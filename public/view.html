@@ -71,8 +71,13 @@
                 console.log('Stream de vídeo remoto adicionado.');
                 videoStreamAdded = true;
 
-                // Exibir o botão de play para o usuário
-                playButton.style.display = "block";
+                // Iniciar o vídeo automaticamente sem necessidade de clicar
+                remoteVideo.play().then(() => {
+                    console.log("Vídeo está sendo reproduzido automaticamente.");
+                }).catch(err => {
+                    console.error("Erro ao tentar reproduzir o vídeo:", err);
+                    playButton.style.display = "block"; // Mostrar botão de play se o auto-play falhar
+                });
             }
         };
 
